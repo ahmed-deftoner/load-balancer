@@ -61,6 +61,22 @@ func (s *simpleServer) Serve(rw http.ResponseWriter, req *http.Request) {
 	s.proxy.ServeHTTP(rw, req)
 }
 
+func (lb *loadBalancer) GetNextAvailableServer() Server {
+	server := lb.servers[lb.roundRobinCount%len(lb.servers)]
+	for !server.IsAlive() {
+		lb.roundRobinCount++
+		server = lb.servers[lb.roundRobinCount%len(lb.servers)]
+	}
+	lb.roundRobinCount++
+	return server
+}
+
+func (lb *loadBalancer) ServeProxy(rw http.ResponseWriter, req *http.Request) {
+	target := lb.GetNextAvailableServer()
+	fmt.Println("forwarding request to address %q\n", target.Address())
+	target.Serve(rw, req)
+}
+
 func main() {
 	servers := []Server{
 		newSimpleServer("https://www.twitter.com"),
