@@ -19,6 +19,20 @@ type Server interface {
 	Serve(rw http.ResponseWriter, r *http.Request)
 }
 
+type loadBalancer struct {
+	port            string
+	roundRobinCount int
+	servers         []Server
+}
+
+func newLoadBalancer(port string, servers []Server) *loadBalancer {
+	return &loadBalancer{
+		port:            port,
+		roundRobinCount: 0,
+		servers:         servers,
+	}
+}
+
 func newSimpleServer(addr string) *simpleServer {
 	serverUrl, err := url.Parse(addr)
 	handleErr(err)
