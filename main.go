@@ -50,5 +50,19 @@ func handleErr(err error) {
 }
 
 func main() {
+	servers := []Server{
+		newSimpleServer("https://www.twitter.com"),
+		newSimpleServer("https://www.reddit.com"),
+		newSimpleServer("https://www.bing.com"),
+		newSimpleServer("https://www.amazon.com"),
+	}
+	lb := newLoadBalancer("8000", servers)
+	handleRedirect := func(rw http.ResponseWriter, req *http.Request) {
+		lb.ServeProxy(rw, req)
+	}
+	http.HandleFunc("/", handleRedirect)
 
+	fmt.Println("listening on 'localhost:%s'\n", lb.port)
+
+	http.ListenAndServe(":"+lb.port, nil)
 }
